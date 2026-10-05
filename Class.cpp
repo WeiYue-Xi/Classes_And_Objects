@@ -6,8 +6,4 @@
 #include <iostream>
 using namespace std;
 
-void Class::Hello()
-{
-    cout << "Hello world" << endl;
-}
 

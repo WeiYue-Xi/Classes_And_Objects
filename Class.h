@@ -4,12 +4,27 @@
 
 #ifndef CLASSES_AND_OBECTS_CLASS_H
 #define CLASSES_AND_OBECTS_CLASS_H
+#include <iostream>
 
+using namespace std;
 
-class Class
+class  Date
 {
 public:
-    void Hello();
+    void Init(int year,int month,int day)
+    {
+        _day = day;
+        _month = month;
+        _year = year;
+    }
+    void Print()
+    {
+        cout << _year << ": " << _month << ": " << _day << endl;
+    }
+private:
+    int _year;
+    int _month;
+    int _day;
 };
 
 
