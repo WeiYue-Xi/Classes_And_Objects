@@ -11,12 +11,27 @@ using namespace std;
 class  Date
 {
 public:
-    void Init(int year,int month,int day)
+    Date()
     {
-        _day = day;
-        _month = month;
-        _year = year;
+        _year = 1;
+        _month = 1;
+        _day = 1;
     }
+    Date(int year,int month,int day)
+    {
+        _year = year;
+        _month = month;
+        _day = day;
+    }
+
+    //拷贝构造
+    Date(Date& d)
+    {
+        _year = d._year;
+        _month = d._month;
+        _day = d._day;
+    }
+
     void Print()
     {
         cout << _year << ": " << _month << ": " << _day << endl;
