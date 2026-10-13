@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "Class.h"
+#include "Date.h"
 
 using namespace std;
 
@@ -13,5 +13,13 @@ int main()
     d1.Print();
     d3.Print();
 
+    Date d4 = d2++;
+    d4.Print();
+    d2.Print();
+
+    cout << (d1 < d1) << endl;
+    cout << (d1 >= d1) << endl;
+
+    cout << d2-d1 << endl;
     return 0;
 }

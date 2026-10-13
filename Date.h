@@ -38,7 +38,8 @@ public:
         assert(month > 0 && month < 13);
         static int monthDayArray[13] = {-1,31,28,31,30,31,30,31,31,30,31,30,31};
 
-        if (month == 2 && (year % 400 == 0) || (year % 4 == 0 && year % 100 != 0))
+
+        if (month == 2 && (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)))
         {
             return monthDayArray[month] + 1;
         }
@@ -48,9 +49,17 @@ public:
 
     void Print();
 
-    bool operator==(const Date& x)
+
+
+    Date& operator=(const Date& x)
     {
-        return _year == x._year && _month == x._month && _day == x._day;
+        if (this != &x)
+        {
+            _year = x._year;
+            _month = x._month;
+            _day = x._day;
+        }
+        return *this;
     }
 
     Date& operator+=(int day);
@@ -61,14 +70,22 @@ public:
     Date& operator-=(int day);
     Date operator-(int day);
     //日期-日期
-    int operator-(const Date& d);
+    int operator-(Date& x);
 
     //比较日期
-
+    bool operator==(const Date& x);
+    bool operator!=(const Date& x);
+    bool operator<(const Date& x);
+    bool operator<=(const Date& x);
+    bool operator>(const Date& x);
+    bool operator>=(const Date& x);
     //++日期
-    Date operator++();
+    Date& operator++();
     //日期++
     Date operator++(int);
+
+    Date& operator--();
+    Date operator--(int);
 private:
     int _year;
     int _month;
