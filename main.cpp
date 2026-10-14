@@ -6,7 +6,7 @@
 
 using namespace std;
 
-int main()
+int test()
 {
     cout << "你好" << endl;
     return 0;
