@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void Date::Print()
+void Date::Print() const
 {
     cout << _year << " "<< _month << " " << _day << endl;
 }
@@ -35,7 +35,7 @@ Date& Date::operator+=(int day)
     return *this;
 }
 
-Date Date::operator+(int day)
+Date Date::operator+(int day) const
 {
     Date tmp(*this);
     tmp += day;
@@ -51,7 +51,7 @@ Date& Date::operator-=(int day)
 }
 
 
-Date Date::operator-(int day)
+Date Date::operator-(int day) const
 {
     Date tmp(*this);
     if (tmp._day < 0)
@@ -92,18 +92,18 @@ int Date::operator-(Date& x)
     return count * flag;
 }
 
-bool Date::operator==(const Date& x)
+bool Date::operator==(const Date& x) const
 {
     return _year == x._year && _month == x._month && _day == x._day;
 }
 
-bool Date::operator!=(const Date &x)
+bool Date::operator!=(const Date &x) const
 {
     return !(*this == x);
 }
 
 
-bool Date::operator<(const Date& x)
+bool Date::operator<(const Date& x) const
 {
     if (_year < x._year)
     {
@@ -118,17 +118,17 @@ bool Date::operator<(const Date& x)
     return false;
 }
 
-bool Date::operator<=(const Date& x)
+bool Date::operator<=(const Date& x) const
 {
     return *this < x || *this == x;
 }
 
-bool Date::operator>(const Date &x)
+bool Date::operator>(const Date &x) const
 {
     return !(*this <= x);
 }
 
-bool Date::operator>=(const Date &x)
+bool Date::operator>=(const Date &x) const
 {
     return !(*this < x);
 }
@@ -157,4 +157,38 @@ Date Date::operator--(int)
     Date tmp(*this);
     *this -= 1;
     return tmp;
+}
+
+ostream& operator<<(ostream& out,const Date& x)
+{
+    out <<x. _year << "年" << x._month << "月" << x._day << "日" << endl;
+    return out;
+}
+
+istream& operator>>(istream& input,Date& x)
+{
+    while (1)
+    {
+        cout << "请输入日期：";
+        input >> x._year >> x._month >> x._day;
+        if (x.checkDate())
+        {
+            break;
+        }else
+        {
+            cout << "非法日期，请重新输入！" << endl;
+        }
+    }
+    return input;
+}
+
+bool Date::checkDate()
+{
+    if (_month < 1 || _month > 12 || _day < 1 || _day > getMonthDay(_year,_month))
+    {
+        return false;
+    }else
+    {
+        return true;
+    }
 }

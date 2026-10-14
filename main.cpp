@@ -1,25 +1,13 @@
-#include <iostream>
+//
+// Created by 24242 on 2026/10/14.
+//
 
-#include "Date.h"
+#include <iostream>
 
 using namespace std;
 
 int main()
 {
-    Date d1(2023,1,1);
-    Date d2(2022,12,20);
-
-    Date d3 = d1 + 379;
-    d1.Print();
-    d3.Print();
-
-    Date d4 = d2++;
-    d4.Print();
-    d2.Print();
-
-    cout << (d1 < d1) << endl;
-    cout << (d1 >= d1) << endl;
-
-    cout << d2-d1 << endl;
+    cout << "你好" << endl;
     return 0;
 }
