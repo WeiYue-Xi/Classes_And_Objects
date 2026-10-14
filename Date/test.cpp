@@ -4,7 +4,7 @@
 
 using namespace std;
 
-int main()
+int test()
 {
     Date d1(2023,1,1);
     Date d2(2022,12,20);
