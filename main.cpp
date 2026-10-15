@@ -3,11 +3,13 @@
 //
 
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
-int test()
+int main()
 {
-    cout << "你好" << endl;
+    int num[] = {43,100,8,320,77,101,32};
+    sort(num,num + 7,greater<int>());
     return 0;
 }

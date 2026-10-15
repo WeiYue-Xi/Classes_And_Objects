@@ -350,3 +350,605 @@ Date* operator&()
     }
 ```
 
+## 六、初始化列表
+
+***构造函数成员初始化列表***：写在构造函数列表之后、函数体之前，用来初始化基类和成员变量。每个成员变量在初始化列表中只能出现一次，语法理解上初始化列表可以认为是每个成员变量定义初始化的地方。
+
+```c++
+#include <string>
+
+class Student {
+private:
+    std::string name;
+    int age;
+
+public:
+    Student(const std::string& n, int a)
+        : name(n), age(a)//初始化列表
+    {
+        // 构造函数体
+    }
+};
+```
+
+与赋值相比，区别在于：***进入构造函数之前，成员的初始化已经完成。***
+
+```c++
+// 写法二：构造函数体中赋值
+Student(const std::string& n, int a)
+{
+    name = n;
+    age = a;
+}
+```
+
+*对于第二种写法，`name`是一个`std::string`对象，实际过程是：**先默认构造`name`，得到一个空字符串，再进入构造函数体，最后通过赋值把`name`改成n。***
+
+初始化列表能够明确表达“对象创建时应当处于什么状态”，所以通常优先使用。
+
+![img](E:\C++\Classes_And_Obects\image\img.png)
+
+### 1、哪些成员必须在初始化阶段设置？
+
+#### Ⅰ、`const`成员
+
+```c++
+class Example {
+private:
+    const int value;
+	//const int value = 10;也可以在成员声明处提供默认初始化值，这里是缺省值
+public:
+    Example(int v)
+        : value(v)
+    {
+    }
+};
+```
+
+`const in`必须在初始化时确定值，不能在函数体里再赋值。
+
+#### Ⅱ、引用成员
+
+引用构建时必须绑定对象：
+
+```c++
+class Example {
+private:
+    int& ref;
+
+public:
+    Example(int& x)
+        : ref(x)
+    {
+    }
+};
+
+int number = 10;
+Example e(number);
+```
+
+这里`ref`绑定到了`number`。引用不能进入函数体后再绑定。
+
+```c++
+Example(int& x)
+{
+    ref = x;  // 错误：ref 在此之前没有完成初始化
+}
+```
+
+***<u>引用成员不会延长被引用对象的生命周期，被引用对象必须在使用时任然存在。</u>***
+
+#### Ⅲ、没有默认构造函数的类成员
+
+```c++
+class Engine {
+public:
+    explicit Engine(int power) {
+        // ...
+    }
+};
+
+class Car {
+private:
+    Engine engine;
+
+public:
+    Car(int power)
+        : engine(power)
+    {
+    }
+};
+```
+
+`Engine`只有一个需要参数的构造函数，所以创建`Car`时必须告诉它如何构造`engine`。
+
+```c++
+//错误：在执行赋值语句之前，编译器就需要先构造engine，但它找不到Engine()
+Car(int power)
+{
+    engine = Engine(power);
+}
+```
+
+### 2、初始化顺序
+
+***<u>成员按它们在类中的声明顺序初始化，而不是按初始化列表的书写顺序。最好列表顺序和声明顺序一致</u>***
+
+```c++
+class Example {
+private:
+    int x;  // 先声明
+    int y;  // 后声明
+
+public:
+    Example()
+        : y(20), x(10)//先初始化x,再初始化y
+    {
+    }
+};
+```
+
+如何成员之间有依赖
+
+```c++
+//正确
+class Example {
+private:
+    int x;
+    int y;
+
+public:
+    Example(int value)
+        : x(value), y(x + 1)
+    {
+    }
+};
+
+//错误
+Example(int value)
+    : y(value), x(y + 1)
+{
+}
+```
+
+虽然列表先写了`y(value)`，但x任然先初始化，计算`y + 1`时会读取尚未初始化的y。把列表换个顺序无法解决这个问题，应当调整成员声明顺序，或者直接使用构造函数参数：
+
+```c++
+Example(int value)
+    : x(value + 1), y(value)
+{
+}
+```
+
+### 3、初始化列表也可以调用基类构造函数
+
+```c++
+#include <string>
+
+class Person {
+private:
+    std::string name;
+
+public:
+    explicit Person(const std::string& n)
+        : name(n)
+    {
+    }
+};
+
+class Student : public Person {
+private:
+    int grade;
+
+public:
+    Student(const std::string& n, int g)
+        : Person(n), grade(g)
+    {
+    }
+};
+```
+
+`Person(n)`是初始化`Student`对象中的基类部分，`grade(g)`是初始化派生类自己的成员。先构造Person基类部分，在初始化grade，最后执行Student构造函数体。
+
+如果有多个直接基类，它们按继承声明中的顺序初始化，如果涉及虚基类，虚基类会更早初始化，并有派生类负责。派生类不能直接通过自己的初始化基类的数据成员，要通过基类构造函数完成。
+
+### 4、成员声明处的默认值和初始化列表的关系
+
+```c++
+class Example {
+private:
+    int x = 10;
+    int y = 20;
+
+public:
+    Example() = default;
+
+    explicit Example(int value)
+        : x(value)
+    {
+    }
+};
+
+Example a;      // x = 10，y = 20
+Example b(99);  // x = 99，y = 20
+```
+
+- 初始化列表中指定了某成员，就使用列表中的初始化方式。
+- 没有指定就使用该成员在声明处的默认初始化值。
+- 两者都没有，才按该类型的默认初始化规则处理。
+
+### 5、圆括号与花括号区别
+
+```c++
+//圆与花都可以使用
+Example(int v)
+    : value(v)
+{
+}
+
+Example(int v)
+    : value{v}
+{
+}
+```
+
+花括号初始化有一个特点：***禁止窄化转换***。
+
+```c++
+class Example {
+    int value;
+
+public:
+    Example(double v)
+        : value{v}  // 错误：double 到 int 属于窄化转换
+    {
+    }
+};
+```
+
+使用`value(v)`则允许转化，但可能丢失小数部分。
+
+对于`std::vector`，则可能有明显不同
+
+```c++
+#include <vector>
+
+class Example {
+private:
+    std::vector<int> a;
+    std::vector<int> b;
+
+public:
+    Example()
+        : a(3, 7), b{3, 7}
+    {
+    }
+};
+
+a == std::vector<int>{7, 7, 7};  // 3 个元素，每个都是 7
+b == std::vector<int>{3, 7};     // 2 个元素，分别是 3 和 7
+```
+
+因为花括号形式会优先考虑适用的`std::initializer_list`构造函数。这里的`std::initializer_list`和“构造函数成员初始化列表”是两个相关但不同的概率。
+
+> [!CAUTION]
+>
+> 最后注意
+>
+> ```c++
+> class Example {
+> private:
+>     int value;
+> 
+> public:
+>     explicit Example(int value)
+>         : value(value)//value是成员，(value)是构造函数参数
+>     {
+>     }
+> };
+> 
+> class Example {
+> private:
+>     int x;
+>     int y;
+> 
+> public:
+>     Example(int x, int y)
+>         : x(x), y(y)
+>     {
+>     }
+> };
+> ```
+>
+> 完全合法。初始化项左边的`value`指定成员，括号中的`value`是用来初始化它的表达式，这里同名参数会遮蔽成员，所以表达式指的是参数。
+
+## 七、类型转换
+
+- C++支持内置类型隐式转换为类类型对象，需要有相关内置类型为参数的构造函数。
+- 构造函数前面加explicit就不再支持隐式类型转换。
+- 类类型的对象之间也可以隐式转换，需要相应的构造函数支持。
+
+```c++
+class Number {
+private:
+    int value1;
+    int value2
+
+public:
+    Number(int v)
+        : value1(v)
+    {
+    }
+    Number(int value1,int value2)
+        :value1(value1)
+        ,value2(value2)
+    {
+    }
+    Number(const Number& n)
+        :value1(n.value1)
+        ,value2(n.value2)
+        {
+            
+        }
+};
+
+Number a = 10;  // int → Number，调用 Number(int)
+Number n = {1,2};
+```
+
+## 八、static成员
+
+- 用static修饰的成员变量，称为静态成员变量，静态成员变量一定要在类外进行初始化。
+- 静态成员变量为所有类对象所共享，不属于某个具体的对象，不存在对象中，存放在静态区。
+- 用static修饰的成员函数，称为静态成员函数，静态成员函数没有this指针。
+- 静态成员函数可以访问其他的静态成员，但是不能访问非静态的，因为没有this指针。
+- 非静态的成员函数可以访问任意的静态成员变量和静态成员函数。
+- 突破类域就可以访问静态成员，可以通过类名::静态成员来访问静态成员变量和静态成员函数。
+- 静态成员也是类的成员，受public、protected、private访问限定符的限制。
+- 静态成员变量不能在声明位置给缺省值初始化，因为缺省值是给构造函数初始化列表的，静态成员变量不属于某个对象，不走构造函数初始化列表。
+
+## 九、友元
+
+- 友元提供了一种突破类访问限定符封装的方式，友元分为：友元函数和友元类，在函数声明或者类声明的前面加friend，并且把友元声明放到一个类的里面。
+- 外部友元函数可访问类的私有和保护成员，友元函数仅仅是一种声明，它不是类的成员函数。
+- 友元函数可以在类定义的任何地方声明，不受访问限定符限制。
+- 一个函数可以是多个类的友元函数。
+- 友元类中的成员函数都可以是另一个类的友元函数，都可以访问另一个类中的私有和保护成员
+- 友元类的关系是单向的，不具有交换性，比如A类是B类的友元，但是B类不是A类的友元。
+- 友元类关系不能传递，如果A是B的友元，B是C的友元，但是A不是C的友元。
+- 提供了便利的同时，带来了耦合度的增加，破坏了封装，所以友元不宜多用。
+
+## 十、内部类
+
+- 如果一个类定义在另一个类的内部，这个内部类就叫做内部类。内部类是一个独立的类，跟定义在全局相比，它只是受外部类类域限制和访问限定符限制，所以外部类定义的对象不包含内部类。
+- 内部类默认是外部类的友元类。
+- 内部类本质也是一种封装，当A类跟B类紧密关联，A类实现出来主要就是给B类使用，那么可以考虑把A类设计为B的内部类，如果放到private/protected位置，那么A类就是B类的专属内部类，其他地方都用不了。
+
+```c++
+#include <iostream>
+
+class Outer {
+private:
+    int value;
+
+public:
+    explicit Outer(int v)
+        : value(v)
+    {
+    }
+
+    class Inner {
+    public:
+        void print(const Outer& obj) const {
+            std::cout << obj.value << '\n';
+        }
+    };
+};
+
+int main() {
+    Outer outer(100);
+    Outer::Inner inner;
+
+    inner.print(outer);  // 输出 100
+}
+```
+
+虽然`value`是`Outer`的私有成员，嵌套类`Inner`的成员函数任然可以访问它。
+
+不过，嵌套类对象不会自动关联某个外部类对象。因此访问外部类的非静态成员时，需要提供具体对象。
+
+```c++
+class Outer {
+private:
+    int value = 100;
+
+public:
+    class Inner {
+    public:
+        void print() {
+            // std::cout << value;  // 错误：没有 Outer 对象
+        }
+    };
+};
+```
+
+`Inner::print()`中的`this`是`Inner*`，不能用它找到某个`Outer`对象。前面的例子通过参数`obj`指定了要访问哪个对象。
+
+如果外部类成员时静态的，就不需要外部类对象：
+```c++
+class Outer {
+private:
+    static int count;
+
+public:
+    class Inner {
+    public:
+        int getCount() const {
+            return Outer::count;
+        }
+    };
+};
+
+int Outer::count = 10;
+```
+
+***访问权限是单向的：嵌套类可以访问外部类的私有成员，但外部类不会自动获得访问嵌套类私有成员的权限。***
+
+```c++
+class Outer {
+public:
+    class Inner {
+    private:
+        int value = 10;
+
+    public:
+        int getValue() const {
+            return value;
+        }
+    };
+
+    void test(const Inner& obj) {
+        // int x = obj.value;  // 错误：value 是 Inner 的私有成员
+        int x = obj.getValue(); // 正确
+    }
+};
+```
+
+如果需要让`Outer`直接访问，可以在`Inner`中声明友元：
+
+```c++
+class Outer {
+public:
+    class Inner {
+        friend class Outer;
+
+    private:
+        int value = 10;
+    };
+
+    int read(const Inner& obj) const {
+        return obj.value;  // 正确
+    }
+};
+```
+
+***在类里定义一个嵌套类，并不会自动创建它的对象。***
+
+```c++
+class Outer {
+public:
+    class Inner {
+        int data;
+    };
+};
+
+Outer outer
+```
+
+并不会同时创建`Inner`对象。若希望每个`Outer`对象都包含一个`Inner`，还需要声明成员变量：
+
+```c++
+class Outer {
+public:
+    class Inner {
+    public:
+        int data = 0;
+    };
+
+private:
+    Inner inner;  // 每个 Outer 对象包含一个 Inner 对象
+};
+```
+
+嵌套类的成员函数也可以在外部定义：
+```c++
+#include <iostream>
+
+class Outer {
+public:
+    class Inner {
+    public:
+        void show() const;
+    };
+};
+
+void Outer::Inner::show() const {
+    std::cout << "Inner\n";
+}
+```
+
+## 十一、匿名对象
+
+- 用类型(实参)定义出来的对象叫做匿名对象，相比之前定义的类型对象名(实参)定义出来的叫有名对象。
+- 匿名对象生命周期只在当前一行，一般临时定义一个对象当前用一下即可，就可以定义匿名对象。
+
+***匿名对象经常用于传参。***
+
+如果某个对象只需要使用一次，就可以直接创建临时对象传给函数：
+
+```c++
+void printStudent(const Student& s) {
+    s.show();
+}
+
+int main() {
+    printStudent(Student(20));
+    //printStudent(Student{20});
+}
+```
+
+因为参数是`const Student&`，这里没有为形参再复制一个`Student`对象。
+
+***临时对象绑定到局部`const`引用时，可以延长生命周期。***
+
+```c++
+int main() {
+    const Student& ref = Student(18);
+
+    ref.show();  // 正确：临时对象仍然存在
+
+}  // 临时对象在这里销毁
+```
+
+这里的临时对象没有在第一行的分号处销毁，而是延长到局部引用`ref`的什么周期结束。
+
+局部右值引用1也可以产生这种效果：
+
+```c++
+Student&& ref = Student(18);
+ref.show();
+```
+
+普通的非`const`左值引用则不能直接绑定这里的临时对象：
+
+```c++
+// Student& ref = Student(18);  // 错误
+```
+
+> [!CAUTION]
+>
+> 生命周期延长有具体规则，不能1认为只要出现引用就能一直保留临时对象。
+
+***用临时对象初始化变量，不一定发生拷贝。***
+
+```c++
+Student s = Student(18);
+```
+
+这里=表示初始化，并不是对已有对象赋值。
+
+在C++17及以后，对于这种同类型的初始化，s会直接构造，不会先创建一个独立临时对象，再拷贝到s。
+
+更直接的写法是：
+
+```c++
+Student s(18);
+//Student s{18};
+```
+
+## 十二、对象拷贝时的编译器优化
+
+- 现代编译器会为了尽可能提高程序的效率，在不影响正确的情况下会尽可能减少一些传参和传返回值的过程中可以省略的拷贝。
+- 如何优化C++标准并没有严格规定，各个编译器会根据情况自行处理。当前主流的相对新一点的编译器对于连续一个表达式步骤中的连续拷贝会进行合并优化，有些更新更“激进”的编译器还会进行跨行表达式的合并优化。
+
+ 
